@@ -147,6 +147,7 @@
                     </links>
                     <overview>${basedir}/overview.html</overview>
                     <encoding>${source.encoding}</encoding>
+                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
             </plugin>
             <plugin>
