@@ -21,8 +21,12 @@ public class DhExchange {
 
 	/* Given by the standard */
 
-    static final BigInteger p1, p14;
+    static final BigInteger p1;
+    static final BigInteger p14;
     static final BigInteger g;
+    
+	/* Introduced to support SHA2 for key exchange algorithm */
+	private String shaType;
 
     BigInteger p;
 
@@ -58,10 +62,11 @@ public class DhExchange {
 
         p1 = new BigInteger(p1_string);
         p14 = new BigInteger(p14_string, 16);
-        g = new BigInteger("2");
+        g = BigInteger.valueOf(2);
     }
 
-    public DhExchange() {
+    public DhExchange(String shaType) {
+    	this.shaType = shaType;
     }
 
     public void clientInit(int group, SecureRandom rnd) {
@@ -175,9 +180,10 @@ public class DhExchange {
 
     public byte[] calculateH(byte[] clientversion, byte[] serverversion, byte[] clientKexPayload,
                              byte[] serverKexPayload, byte[] hostKey) throws IOException {
-        HashForSSH2Types hash = new HashForSSH2Types("SHA1");
+        HashForSSH2Types hash = new HashForSSH2Types(this.shaType);
 
         if(log.isInfoEnabled()) {
+			log.info("SHA Type for KEX: " + this.shaType);
             log.info("Client: '" + StringEncoder.GetString(clientversion) + "'");
             log.info("Server: '" + StringEncoder.GetString(serverversion) + "'");
         }

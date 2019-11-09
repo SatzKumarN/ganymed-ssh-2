@@ -34,6 +34,8 @@ import ch.ethz.ssh2.signature.DSASignature;
 import ch.ethz.ssh2.signature.RSAPublicKey;
 import ch.ethz.ssh2.signature.RSASHA1Verify;
 import ch.ethz.ssh2.signature.RSASignature;
+import ch.ethz.ssh2.transport.constant.Kex;
+import ch.ethz.ssh2.util.SecureShellUtil;
 
 /**
  * @version $Id$
@@ -58,7 +60,7 @@ public class ClientKexManager extends KexManager {
         if(kxs.np.server_host_key_algo.equals("ssh-rsa")) {
             RSASignature rs = RSASHA1Verify.decodeSSHRSASignature(sig);
             RSAPublicKey rpk = RSASHA1Verify.decodeSSHRSAPublicKey(hostkey);
-
+           
             log.debug("Verifying ssh-rsa signature");
 
             return RSASHA1Verify.verifySignature(kxs.H, rs, rpk);
@@ -124,7 +126,7 @@ public class ClientKexManager extends KexManager {
                 ignore_next_kex_packet = true;
             }
 
-            if(kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")) {
+            if(kxs.np.kex_algo.equals(Kex.DH_GEX_SHA1.getAlgorithm())) {
                 if(kxs.dhgexParameters.getMin_group_len() == 0) {
                     PacketKexDhGexRequestOld dhgexreq = new PacketKexDhGexRequestOld(kxs.dhgexParameters);
                     tm.sendKexMessage(dhgexreq.getPayload());
@@ -138,13 +140,16 @@ public class ClientKexManager extends KexManager {
                 return;
             }
 
-            if(kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
-                    || kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")) {
-                kxs.dhx = new DhExchange();
-
-                if(kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")) {
-                    kxs.dhx.clientInit(1, rnd);
-                }
+	    if (kxs.np.kex_algo.equals(Kex.DH_G1_SHA1.getAlgorithm())
+		    || kxs.np.kex_algo.equals(Kex.DH_G14_SHA1.getAlgorithm())
+		    || kxs.np.kex_algo.equals(Kex.DH_G1_SHA2.getAlgorithm())
+		    || kxs.np.kex_algo.equals(Kex.DH_G14_SHA2.getAlgorithm())) {
+                kxs.dhx = new DhExchange(SecureShellUtil.getShaType(kxs.np.kex_algo));
+               
+		if (kxs.np.kex_algo.equals(Kex.DH_G1_SHA1.getAlgorithm())
+			|| kxs.np.kex_algo.equals(Kex.DH_G1_SHA2.getAlgorithm())) {
+		    kxs.dhx.clientInit(1, rnd);
+		}
                 else {
                     kxs.dhx.clientInit(14, rnd);
                 }
@@ -213,7 +218,7 @@ public class ClientKexManager extends KexManager {
             throw new IOException("Unexpected Kex submessage!");
         }
 
-        if(kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")) {
+        if(kxs.np.kex_algo.equals(Kex.DH_GEX_SHA1.getAlgorithm())) {
             if(kxs.state == 1) {
                 PacketKexDhGexGroup dhgexgrp = new PacketKexDhGexGroup(msg);
                 kxs.dhgx = new DhGroupExchange(dhgexgrp.getP(), dhgexgrp.getG());
@@ -263,8 +268,10 @@ public class ClientKexManager extends KexManager {
             throw new IllegalStateException("Illegal State in KEX Exchange!");
         }
 
-        if(kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
-                || kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")) {
+	if (kxs.np.kex_algo.equals(Kex.DH_G1_SHA1.getAlgorithm())
+		|| kxs.np.kex_algo.equals(Kex.DH_G14_SHA1.getAlgorithm())
+		|| kxs.np.kex_algo.equals(Kex.DH_G1_SHA2.getAlgorithm())
+		|| kxs.np.kex_algo.equals(Kex.DH_G14_SHA2.getAlgorithm())) {
             if(kxs.state == 1) {
 
                 PacketKexDHReply dhr = new PacketKexDHReply(msg);

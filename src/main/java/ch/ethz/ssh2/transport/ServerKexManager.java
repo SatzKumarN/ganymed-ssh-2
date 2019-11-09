@@ -23,6 +23,8 @@ import ch.ethz.ssh2.signature.DSASHA1Verify;
 import ch.ethz.ssh2.signature.DSASignature;
 import ch.ethz.ssh2.signature.RSASHA1Verify;
 import ch.ethz.ssh2.signature.RSASignature;
+import ch.ethz.ssh2.transport.constant.Kex;
+import ch.ethz.ssh2.util.SecureShellUtil;
 
 /**
  * @version $Id$
@@ -88,11 +90,14 @@ public class ServerKexManager extends KexManager {
                 ignore_next_kex_packet = true;
             }
 
-            if(kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
-                    || kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")) {
-                kxs.dhx = new DhExchange();
+            if(kxs.np.kex_algo.equals(Kex.DH_G1_SHA1.getAlgorithm())
+		    || kxs.np.kex_algo.equals(Kex.DH_G14_SHA1.getAlgorithm())
+		    || kxs.np.kex_algo.equals(Kex.DH_G1_SHA2.getAlgorithm())
+		    || kxs.np.kex_algo.equals(Kex.DH_G14_SHA2.getAlgorithm())) {
+                kxs.dhx = new DhExchange(SecureShellUtil.getShaType(kxs.np.kex_algo));
 
-                if(kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")) {
+                if(kxs.np.kex_algo.equals(Kex.DH_G1_SHA1.getAlgorithm())
+			|| kxs.np.kex_algo.equals(Kex.DH_G1_SHA2.getAlgorithm())) {
                     kxs.dhx.serverInit(1, rnd);
                 }
                 else {
@@ -158,8 +163,10 @@ public class ServerKexManager extends KexManager {
             throw new IOException("Unexpected Kex submessage!");
         }
 
-        if(kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
-                || kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")) {
+        if(kxs.np.kex_algo.equals(Kex.DH_G1_SHA1.getAlgorithm())
+		|| kxs.np.kex_algo.equals(Kex.DH_G14_SHA1.getAlgorithm())
+		|| kxs.np.kex_algo.equals(Kex.DH_G1_SHA2.getAlgorithm())
+		|| kxs.np.kex_algo.equals(Kex.DH_G14_SHA2.getAlgorithm())) {
             if(kxs.state == 1) {
                 PacketKexDHInit dhi = new PacketKexDHInit(msg);
 
@@ -203,7 +210,7 @@ public class ServerKexManager extends KexManager {
                 finishKex(false);
                 kxs.state = -1;
 
-                if(authenticationStarted == false) {
+                if(!authenticationStarted) {
                     authenticationStarted = true;
                     state.am = new ServerAuthenticationManager(state);
                 }
