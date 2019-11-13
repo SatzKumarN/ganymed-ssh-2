@@ -25,13 +25,9 @@ public class BasicWithHTTPProxy
 
 		try
 		{
-			/* Create a connection instance */
-
-			Connection conn = new Connection(hostname);
-
-			/* We want to connect through a HTTP proxy */
-
-			conn.setProxyData(new HTTPProxyData(proxyHost, proxyPort));
+			/* Create a connection instance with HTTP proxy */
+			Connection conn = new Connection(hostname, 22,
+					new HTTPProxyData(proxyHost, proxyPort));
 
 			// if the proxy requires basic authentication:
 			// conn.setProxyData(new HTTPProxyData(proxyHost, proxyPort, "username", "secret"));
